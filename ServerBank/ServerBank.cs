@@ -36,18 +36,57 @@ namespace ServerBank
         private void Start()
         {
             manager = new DBManager();
-            manager.setupDB();
+			manager.setupDb();
         }
 
         public override void Initialize()
         {
-
-            PlayerHooks.PlayerPostLogin += OnPostLogin;
             #region Commands
-            Commands.ChatCommands.Add(new Command("ss.player", Shop, "shop", "ss"));
+            Commands.ChatCommands.Add(new Command("serverbank.player", Bank, "coins", "points"));
             #endregion
             throw new NotImplementedException();
         }
         #endregion
+
+		private void Bank(CommandArgs args)
+		{
+			var account = SEconomyPlugin.Instance.GetBankAccount(args.Player.User.Name);
+			BankItem bankAccount = new BankItem();
+			List<BankItem> bankList = new List<BankItem>();
+			Money balance;
+
+			if (args.Parameters.Count < 2)
+			{
+				args.Player.SendValidBankUsage();
+				return;
+			}
+
+			string subcmd = args.Parameters[0].ToLower();
+			switch (subcmd)
+			{
+				#region balance
+				case "balance":
+				case "bal":
+					//Display the player's balance
+					return;
+				#endregion
+
+				#region deposit
+				case "deposit":
+					//Deposit the specified amount. Max balance = 10 Platinum ServerCoins (10,000,000)
+					return;
+				#endregion
+
+				#region withdraw
+				case "withdraw":
+					//Withdraw specified amount. Include a fee. Simulate a savings account
+					return;
+				#endregion
+
+				default:
+					args.Player.SendValidBankUsage();
+					return;
+			}
+		}
     }
 }

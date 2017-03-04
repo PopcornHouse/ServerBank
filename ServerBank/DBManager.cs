@@ -69,6 +69,21 @@ namespace ServerBank
             sqlCreator.EnsureTableStructure(bank);
         }
 
+		public List<BankItem> GetBankItem(TSPlayer player)
+		{
+			var bankList = new List<BankItem>();
 
+			using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", player.User.Name))
+			{
+				while (reader.Read())
+				{
+					bankList.Add(new BankItem(
+						reader.Get<string>("PlayerName"),
+						reader.Get<int>("Balance"))
+						);
+				}
+			}
+			return bankList;
+		}
     }
 }
