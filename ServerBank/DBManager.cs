@@ -10,6 +10,7 @@ using TShockAPI;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Wolfje.Plugins.SEconomy;
 
 namespace ServerBank
 {
@@ -85,5 +86,96 @@ namespace ServerBank
 			}
 			return bankList;
 		}
+
+        //Create New Account
+        public void CreateAccount(TSPlayer player)
+        {
+            var matches = new List<string>();
+            using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", player.User.Name))
+            {
+                while (reader.Read())
+                {
+                    matches.Add(player.User.Name);
+                }
+                if (matches.Count != 0)
+                {
+                    return;
+                }
+                else
+                {
+                    db.Query("INSERT INTO Serverbank WHERE (PlayerName, Balance) "
+                        + "VALUES (@0, @1)", player.User.Name, 0);
+                }
+            }
+        }
+
+        //Get Balance, returns -1 if name not found
+        public Money GetBalance(BankItem account)
+        {
+            Money balance = -1;
+            var matches = new List<string>();
+            using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", account.player))
+            {
+                while (reader.Read())
+                {
+                    matches.Add(account.player);
+                }
+                if (matches.Count != 0)
+                {
+                    balance = reader.Get<int>("Balance");
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            return balance;
+
+        }
+
+        //Deposit 
+        public bool DepositBal(BankItem account, Money amount)
+        {
+            var matches = new List<string>();
+            using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", account.player))
+            {
+                while (reader.Read())
+                {
+                    matches.Add(account.player);
+                }
+                if (matches.Count != 0)
+                {
+                    db.Query("UPDATE ServerBank SET Balance = Balance + @0", amount);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;//
+        }
+
+        //Withdraw
+        public bool WithdrawBal(BankItem account, Money amount, double INTEREST_RATE)
+        {
+            var matches = new List<string>();
+            using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", account.player))
+            {
+                while (reader.Read())
+                {
+                    matches.Add(account.player);
+                }
+                if (matches.Count != 0)
+                {
+                    db.Query("UPDATE ServerBank SET Balance = Balance - @0", (int)(amount * (1 + INTEREST_RATE)));
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;//
+        }
+
     }
 }
