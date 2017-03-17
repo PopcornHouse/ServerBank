@@ -55,9 +55,8 @@ namespace ServerBank
             {
                 return;
             }
-            var account = SEconomyPlugin.Instance.GetBankAccount(args.Player.User.Name);
+
 			BankItem bankAccount = new BankItem();
-			List<BankItem> bankList = new List<BankItem>();
 			Money balance;
 
 			if (args.Parameters.Count < 2)
@@ -66,23 +65,16 @@ namespace ServerBank
 				return;
 			}
 
-            bankList = manager.GetBankItem(args.Player);
-            if (bankList.Count < 1)
-            {
-                //Create New Account
-                manager.CreateAccount(args.Player);
-                bankList = manager.GetBankItem(args.Player);
-            }
-            bankAccount = bankList.ElementAt(0);
+            bankAccount = manager.GetBankItem(args.Player);
+            balance = manager.GetBalance(bankAccount);
 
-			string subcmd = args.Parameters[0].ToLower();
+            string subcmd = args.Parameters[0].ToLower();
 			switch (subcmd)
 			{
 				#region balance
 				case "balance":
 				case "bal":
                     //Display the player's balance
-                    balance = manager.GetBalance(bankAccount);
                     args.Player.SendSuccessMessage("[ServerBank] Balance: {0}", balance);
 					return;
 				#endregion
@@ -95,11 +87,10 @@ namespace ServerBank
                     {
                         args.Player.SendErrorMessage("[ServerBank] Invalid Desposit Amount!");
                         return;
-                        //Index 1 = price
                     }
-                    else if((int)deposit > MAXBALANCE)
+                    else if(((int)deposit + (int)balance) > MAXBALANCE)
                     {
-                        args.Player.SendErrorMessage("[ServerBank] Maximum Desposit Amount is 10 Platinum ServerCoins!");
+                        args.Player.SendErrorMessage("[ServerBank] Maximum Balance Amount is 10 Platinum ServerCoins!");
                         return;
                     }
                     else if((int)deposit <= 0)
@@ -107,8 +98,7 @@ namespace ServerBank
                         args.Player.SendErrorMessage("[ServerBank] Invalid Desposit Amount!");
                         return;
                     }
-
-                    if (manager.DepositBal(bankAccount, deposit))
+                    else if (manager.DepositBal(bankAccount, deposit))
                     {
                         balance = manager.GetBalance(bankAccount);
                         args.Player.SendSuccessMessage("[ServerBank] Success! You have deposited: {0}", deposit);
@@ -131,12 +121,8 @@ namespace ServerBank
                     {
                         args.Player.SendErrorMessage("[ServerBank] Invalid Withdraw Amount!");
                         return;
-                        //Index 1 = price
                     }
-
-                    balance = manager.GetBalance(bankAccount);
-
-                    if((int)withdraw <= 0)
+                    else if((int)withdraw <= 0)
                     {
                         args.Player.SendErrorMessage("[ServerBank] Invalid Withdraw Amount!");
                         return;
@@ -152,8 +138,8 @@ namespace ServerBank
                         else
                         {
                             args.Player.SendErrorMessage("[ServerBank] An Error has Occured!");
-                            return;
                         }
+                        return;
                     }
                     else if((int)(withdraw * (1 + INTEREST_RATE)) > (int)balance)
                     {
@@ -161,8 +147,7 @@ namespace ServerBank
                         //args.Player.SendErrorMessage("[ServerBank] Withdraw Entire Balance for No Interest");
                         return;
                     }
-
-                    if(manager.WithdrawBal(bankAccount, withdraw, INTEREST_RATE))
+                    else if(manager.WithdrawBal(bankAccount, withdraw, INTEREST_RATE))
                     {
                         balance = manager.GetBalance(bankAccount);
                         args.Player.SendSuccessMessage("[ServerBank] Success! You have withdrawed with interest: {0}", (int)(withdraw * (1 + INTEREST_RATE)));

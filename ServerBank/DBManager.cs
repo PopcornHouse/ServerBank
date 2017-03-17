@@ -70,43 +70,37 @@ namespace ServerBank
             sqlCreator.EnsureTableStructure(bank);
         }
 
-		public List<BankItem> GetBankItem(TSPlayer player)
-		{
-			var bankList = new List<BankItem>();
-
-			using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", player.User.Name))
-			{
-				while (reader.Read())
-				{
-					bankList.Add(new BankItem(
-						reader.Get<string>("PlayerName"),
-						reader.Get<int>("Balance"))
-						);
-				}
-			}
-			return bankList;
-		}
-
-        //Create New Account
-        public void CreateAccount(TSPlayer player)
+        public BankItem GetBankItem(TSPlayer player)
         {
-            var matches = new List<string>();
+            var matches = new List<BankItem>();
+            BankItem account = null;
+
             using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", player.User.Name))
             {
+                TShock.Log.ConsoleError("GetBankItem db executed");//Log Error
                 while (reader.Read())
                 {
-                    matches.Add(player.User.Name);
-                }
-                if (matches.Count != 0)
-                {
-                    return;
-                }
-                else
-                {
-                    db.Query("INSERT INTO Serverbank WHERE (PlayerName, Balance) "
-                        + "VALUES (@0, @1)", player.User.Name, 0);
+                    matches.Add(new BankItem(
+                        reader.Get<string>("PlayerName"),
+                        reader.Get<int>("Balance"))
+                        );
                 }
             }
+ 
+            if (matches.Count < 1) //Player isn't in db, create account
+            {
+                db.Query("INSERT INTO ServerBank (PlayerName, Balance) "
+                    + "VALUES (@0, @1)", player.User.Name, 0);
+                account = GetBankItem(player); //recurse through the function
+                TShock.Log.ConsoleError("GetBankItem if executed");//Log Error
+            }
+            else
+            {
+                account = matches.ElementAt(0);
+                TShock.Log.ConsoleError("GetBankItem else executed");//Log Error
+            }
+
+            return account;
         }
 
         //Get Balance, returns -1 if name not found
@@ -152,7 +146,7 @@ namespace ServerBank
                     return false;
                 }
             }
-            return true;//
+            return true;
         }
 
         //Withdraw
@@ -174,7 +168,7 @@ namespace ServerBank
                     return false;
                 }
             }
-            return true;//
+            return true;
         }
 
     }
