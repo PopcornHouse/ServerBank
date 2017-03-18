@@ -77,7 +77,6 @@ namespace ServerBank
 
             using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", player.User.Name))
             {
-                TShock.Log.ConsoleError("GetBankItem db executed");//Log Error
                 while (reader.Read())
                 {
                     matches.Add(new BankItem(
@@ -86,49 +85,43 @@ namespace ServerBank
                         );
                 }
             }
- 
+
             if (matches.Count < 1) //Player isn't in db, create account
             {
                 db.Query("INSERT INTO ServerBank (PlayerName, Balance) "
                     + "VALUES (@0, @1)", player.User.Name, 0);
                 account = GetBankItem(player); //recurse through the function
-                TShock.Log.ConsoleError("GetBankItem if executed");//Log Error
             }
             else
             {
                 account = matches.ElementAt(0);
-                TShock.Log.ConsoleError("GetBankItem else executed");//Log Error
             }
 
             return account;
         }
 
         //Get Balance, returns -1 if name not found
-        public Money GetBalance(BankItem account)
-        {
-            Money balance = -1;
-            var matches = new List<string>();
-            using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", account.player))
-            {
-                while (reader.Read())
-                {
-                    matches.Add(account.player);
-                }
-                if (matches.Count != 0)
-                {
-                    balance = reader.Get<int>("Balance");
-                }
-                else
-                {
-                    return -1;
-                }
-            }
-            return balance;
+        /*  public int GetBalance(BankItem account)
+          {
+              int balance = -1;
+              var matches = new List<string>();
+              using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", account.player))
+              {
+                  while (reader.Read())
+                  {
+                      matches.Add(account.player);
+                  }
+                  if (matches.Count != 0)
+                  {
+                      balance = reader.Get<int>("Balance");
+                  }
+              }
+              return balance;
 
-        }
+          }*/
 
         //Deposit 
-        public bool DepositBal(BankItem account, Money amount)
+        public bool DepositBal(BankItem account, int amount)
         {
             var matches = new List<string>();
             using (var reader = db.QueryReader("SELECT * FROM ServerBank WHERE PlayerName = @0", account.player))

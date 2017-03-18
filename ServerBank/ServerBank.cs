@@ -59,14 +59,13 @@ namespace ServerBank
 			BankItem bankAccount = new BankItem();
 			Money balance;
 
-			if (args.Parameters.Count < 2)
+			if (args.Parameters.Count < 1)
 			{
 				args.Player.SendValidBankUsage();
 				return;
 			}
 
             bankAccount = manager.GetBankItem(args.Player);
-            balance = manager.GetBalance(bankAccount);
 
             string subcmd = args.Parameters[0].ToLower();
 			switch (subcmd)
@@ -75,8 +74,9 @@ namespace ServerBank
 				case "balance":
 				case "bal":
                     //Display the player's balance
+                    Money.TryParse(bankAccount.balance.ToString(), out balance);
                     args.Player.SendSuccessMessage("[ServerBank] Balance: {0}", balance);
-					return;
+                    return;
 				#endregion
 
 				#region deposit
@@ -88,9 +88,9 @@ namespace ServerBank
                         args.Player.SendErrorMessage("[ServerBank] Invalid Desposit Amount!");
                         return;
                     }
-                    else if(((int)deposit + (int)balance) > MAXBALANCE)
+                    else if(((int)deposit + (int)bankAccount.balance) > MAXBALANCE)
                     {
-                        args.Player.SendErrorMessage("[ServerBank] Maximum Balance Amount is 10 Platinum ServerCoins!");
+                        args.Player.SendErrorMessage("[ServerBank] Maximum Balance Amount is: {0}", Money.Parse(MAXBALANCE.ToString()));
                         return;
                     }
                     else if((int)deposit <= 0)
@@ -98,18 +98,19 @@ namespace ServerBank
                         args.Player.SendErrorMessage("[ServerBank] Invalid Desposit Amount!");
                         return;
                     }
-                    else if (manager.DepositBal(bankAccount, deposit))
+                    else if (manager.DepositBal(bankAccount, (int)deposit))
                     {
-                        balance = manager.GetBalance(bankAccount);
                         args.Player.SendSuccessMessage("[ServerBank] Success! You have deposited: {0}", deposit);
+                        bankAccount = manager.GetBankItem(args.Player);
+                        Money.TryParse(bankAccount.balance.ToString(), out balance);
                         args.Player.SendSuccessMessage("[ServerBank] Balance {0}", balance);
+
                     }
                     else
                     {
                         args.Player.SendErrorMessage("[ServerBank] An Error has Occured!");
                         return;
                     }
-
                     return;
 				#endregion
 
@@ -127,12 +128,13 @@ namespace ServerBank
                         args.Player.SendErrorMessage("[ServerBank] Invalid Withdraw Amount!");
                         return;
                     }
-                    else if((int)withdraw == (int)balance)//No Interest when withdraw amount == balance
+                    else if((int)withdraw == (int)bankAccount.balance)//No Interest when withdraw amount == balance
                     {
-                        if (manager.WithdrawBal(bankAccount, withdraw, 0))
+                        if (manager.WithdrawBal(bankAccount, (int)withdraw, 0))
                         {
-                            balance = manager.GetBalance(bankAccount);
                             args.Player.SendSuccessMessage("[ServerBank] Success! You have withdrawed: {0}", withdraw);
+                            bankAccount = manager.GetBankItem(args.Player);
+                            Money.TryParse(bankAccount.balance.ToString(), out balance);
                             args.Player.SendSuccessMessage("[ServerBank] Balance {0}", balance);
                         }
                         else
@@ -141,16 +143,17 @@ namespace ServerBank
                         }
                         return;
                     }
-                    else if((int)(withdraw * (1 + INTEREST_RATE)) > (int)balance)
+                    else if((int)(withdraw * (1 + INTEREST_RATE)) > (int)bankAccount.balance)
                     {
                         args.Player.SendErrorMessage("[ServerBank] Withdraw Amount Exceeds Balance With Interest");
                         //args.Player.SendErrorMessage("[ServerBank] Withdraw Entire Balance for No Interest");
                         return;
                     }
-                    else if(manager.WithdrawBal(bankAccount, withdraw, INTEREST_RATE))
+                    else if(manager.WithdrawBal(bankAccount, (int)withdraw, INTEREST_RATE))
                     {
-                        balance = manager.GetBalance(bankAccount);
-                        args.Player.SendSuccessMessage("[ServerBank] Success! You have withdrawed with interest: {0}", (int)(withdraw * (1 + INTEREST_RATE)));
+                        args.Player.SendSuccessMessage("[ServerBank] Success! You have withdrawed with interest: {0}", (Money)(withdraw * (1 + INTEREST_RATE)));
+                        bankAccount = manager.GetBankItem(args.Player);
+                        Money.TryParse(bankAccount.balance.ToString(), out balance);
                         args.Player.SendSuccessMessage("[ServerBank] Balance {0}", balance);
                     }
                     else
